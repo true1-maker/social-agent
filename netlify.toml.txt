@@ -1,0 +1,32 @@
+# netlify.toml — Netlify Configuration
+# ============================================================
+
+[build]
+  # No build command needed (pure functions)
+  publish = "public"      # optional static folder
+  functions = "functions" # where your Netlify functions live
+
+[functions]
+  # Each function gets up to 10 seconds (free tier)
+  # Increase to 26s if Instagram processing is slow
+  node_bundler = "esbuild"
+
+# ── Function-specific settings ───────────────────────────────
+[[plugins]]
+  # No plugins needed for basic setup
+
+# ── Environment variable hints (set actual values in Netlify UI) ──
+# Go to: Site Settings → Environment Variables → Add variable
+#
+# GEMINI_API_KEY         = your Gemini API key (free at aistudio.google.com)
+# FB_PAGE_ID             = your Facebook Page ID
+# FB_ACCESS_TOKEN        = Facebook long-lived page access token
+# IG_ACCOUNT_ID          = Instagram Business Account ID
+# IG_ACCESS_TOKEN        = Same as FB long-lived token (usually)
+# TW_API_KEY             = Twitter/X API Key
+# TW_API_SECRET          = Twitter/X API Secret
+# TW_ACCESS_TOKEN        = Twitter/X Access Token
+# TW_ACCESS_TOKEN_SECRET = Twitter/X Access Token Secret
+# LI_ACCESS_TOKEN        = LinkedIn OAuth 2.0 token (optional)
+# LI_PERSON_URN          = LinkedIn Person URN (optional)
+# AGENT_SECRET           = random string to secure the function endpoint
