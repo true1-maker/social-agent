@@ -1,0 +1,78 @@
+# ============================================================
+# .github/workflows/scheduler.yml
+# Daily Social Media Agent — Triggers Netlify Function
+# ============================================================
+
+name: 🤖 Social Media Agent
+
+on:
+  # ── Scheduled runs (UTC time) ─────────────────────────────
+  schedule:
+    # Post 1: 2:00 PM UTC = 8:00 PM Bangladesh (BST = UTC+6)
+    - cron: "0 14 * * *"
+
+    # Post 2 (optional — enable for double posting):
+    # - cron: "0 12 * * *"   # 6:00 PM Bangladesh
+
+  # ── Manual trigger (for testing) ──────────────────────────
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why are you triggering manually?"
+        required: false
+        default: "Manual test"
+
+jobs:
+  run-agent:
+    name: 🚀 Trigger Social Agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      # ── Step 1: Checkout (needed for any file access) ──────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Step 2: Call the Netlify Function ──────────────────
+      - name: 📡 Trigger Agent Function
+        env:
+          NETLIFY_FUNCTION_URL: ${{ secrets.NETLIFY_FUNCTION_URL }}
+          AGENT_SECRET: ${{ secrets.AGENT_SECRET }}
+        run: |
+          echo "🤖 Triggering Social Media Agent..."
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST "$NETLIFY_FUNCTION_URL" \
+            -H "Content-Type: application/json" \
+            -H "x-agent-secret: $AGENT_SECRET" \
+            -d '{"source": "github-actions", "time": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+          )
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          
+          echo "📊 Status Code: $HTTP_CODE"
+          echo "📝 Response: $BODY"
+          
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "❌ Agent failed with status $HTTP_CODE"
+            exit 1
+          fi
+          
+          echo "✅ Agent triggered successfully!"
+
+      # ── Step 3: Log result as artifact (optional) ──────────
+      - name: 📋 Save run log
+        if: always()
+        run: |
+          mkdir -p logs
+          echo "Run at: $(date -u)" >> logs/run.log
+          echo "Triggered by: ${{ github.event_name }}" >> logs/run.log
+
+# ──────────────────────────────────────────────────────────────
+# 📋 SETUP: Add these GitHub Secrets in your repo:
+# Settings → Secrets and Variables → Actions → New repository secret
+#
+# NETLIFY_FUNCTION_URL = https://YOUR-SITE.netlify.app/.netlify/functions/run-agent
+# AGENT_SECRET         = any random string (add this check in run-agent.js too)
+# ──────────────────────────────────────────────────────────────
